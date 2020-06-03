@@ -16,11 +16,12 @@ router.post("/:id/posts", (req, res) => {
 });
 
 router.get("/", (req, res) => {
-  // do your magic!
+  db.get().then((data) => res.status(200).json(data));
 });
 
 router.get("/:id", (req, res) => {
-  // do your magic!
+  const { id } = req.params;
+  db.getById(Number(id)).then((data) => res.status(200).json(data));
 });
 
 router.get("/:id/posts", (req, res) => {
