@@ -29,11 +29,22 @@ router.get("/:id/posts", (req, res) => {
 });
 
 router.delete("/:id", (req, res) => {
-  // do your magic!
+  const { id } = req.params;
+  db.remove(Number(id)).then((data) => res.status(201).json(data));
 });
 
 router.put("/:id", (req, res) => {
-  // do your magic!
+  const { id } = req.params;
+
+  db.getById(Number(id)).then((user) => {
+    const updatedUser = {
+      ...user,
+      ...req.body,
+    };
+    db.update(Number(id), updatedUser)
+      .then(() => res.status(201).json(updatedUser))
+      .catch((err) => console.log(err));
+  });
 });
 
 //custom middleware
