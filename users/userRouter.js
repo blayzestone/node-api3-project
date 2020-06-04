@@ -1,5 +1,6 @@
 const express = require("express");
-const db = require("./userDb");
+const userDb = require("./userDb");
+const postDb = require("../posts/postDb");
 
 const router = express.Router();
 
@@ -8,40 +9,59 @@ router.post("/", validateUser, (req, res) => {
     ...req.body,
     id: Date.now(),
   };
-  db.insert(user).then((data) => res.status(201).json(data));
+  userDb.insert(user).then((data) => res.status(201).json(data));
 });
 
-router.post("/:id/posts", (req, res) => {
-  // do your magic!
+router.post("/:id/posts", validatePost, (req, res) => {
+  const { id } = req.params;
+  const post = {
+    ...req.body,
+    id: Date.now(),
+    user_id: Number(id),
+  };
+
+  postDb
+    .insert(post)
+    .then(() => res.status(201).json(post))
+    .catch((err) => console.log(err));
 });
 
 router.get("/", (req, res) => {
-  db.get().then((data) => res.status(200).json(data));
+  userDb.get().then((data) => res.status(200).json(data));
 });
 
 router.get("/:id", validateUserId, (req, res) => {
   const { id } = req.params;
-  db.getById(Number(id)).then((data) => res.status(200).json(data));
+  userDb.getById(Number(id)).then((data) => res.status(200).json(data));
 });
 
 router.get("/:id/posts", (req, res) => {
-  // do your magic!
+  const { id } = req.params;
+  postDb
+    .get()
+    .then((posts) => {
+      const userPosts = posts.filter((post) => post.user_id === Number(id));
+
+      res.status(200).json(userPosts);
+    })
+    .catch((err) => console.log(err));
 });
 
 router.delete("/:id", validateUserId, (req, res) => {
   const { id } = req.params;
-  db.remove(Number(id)).then((data) => res.status(201).json(data));
+  userDb.remove(Number(id)).then((data) => res.status(201).json(data));
 });
 
 router.put("/:id", validateUserId, (req, res) => {
   const { id } = req.params;
 
-  db.getById(Number(id)).then((user) => {
+  userDb.getById(Number(id)).then((user) => {
     const updatedUser = {
       ...user,
       ...req.body,
     };
-    db.update(Number(id), updatedUser)
+    userDb
+      .update(Number(id), updatedUser)
       .then(() => res.status(201).json(updatedUser))
       .catch((err) => console.log(err));
   });
@@ -52,7 +72,7 @@ router.put("/:id", validateUserId, (req, res) => {
 function validateUserId(req, res, next) {
   const { id } = req.params;
 
-  db.getById(Number(id)).then((user) => {
+  userDb.getById(Number(id)).then((user) => {
     if (user) {
       next();
     } else {
